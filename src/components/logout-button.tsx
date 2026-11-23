@@ -1,9 +1,10 @@
 "use client";
 
+import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-export function LogoutButton() {
+export function LogoutButton({ className }: { className?: string }) {
     const router = useRouter();
 
     async function logout() {
@@ -13,7 +14,8 @@ export function LogoutButton() {
     }
 
     return (
-        <Button variant="outline" onClick={logout}>
+        <Button variant="outline" className={className} onClick={logout}>
+            <LogOut className="size-4" />
             Log out
         </Button>
     );
