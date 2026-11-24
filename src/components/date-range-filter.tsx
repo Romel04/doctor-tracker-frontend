@@ -26,7 +26,7 @@ export function DateRangeFilter({
 
     return (
         <div role="group" aria-label={label} className={cn("space-y-2", className)}>
-            <p className="text-sm font-medium">{label}</p>
+            {label && <p className="text-sm font-medium">{label}</p>}
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                     <Label htmlFor={`${id}-from`} className="text-xs font-normal text-muted-foreground">

@@ -5,10 +5,16 @@ import Link from "next/link";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Pencil, Search, Trash2 } from "lucide-react";
 import { DateRangeFilter } from "@/components/date-range-filter";
+import { FilterField } from "@/components/filter-field";
+import { InitialsAvatar } from "@/components/initials-avatar";
 import { NativeSelect } from "@/components/native-select";
+import { PageHeader } from "@/components/page-header";
 import { DeletePatientDialog } from "@/components/patients/delete-patient-dialog";
 import { EditPatientDialog } from "@/components/patients/edit-patient-dialog";
 import { PaginationControls } from "@/components/pagination-controls";
+import { TableEmpty } from "@/components/table-empty";
+import { TableFrame } from "@/components/table-frame";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,7 +24,6 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import type { Doctor, Paginated, Patient } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
 
@@ -82,73 +87,85 @@ export default function PatientsPage() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-semibold">Patients</h1>
-                <p className="text-sm text-muted-foreground">
-                    All patients across doctors. To add a patient, open a doctor from the Doctors page.
-                </p>
-            </div>
+            <PageHeader
+                title="Patients"
+                description="All patients across doctors. To add a patient, open a doctor from the Doctors page."
+            />
 
             <Card>
-                <CardContent className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
-                        <Input
-                            aria-label="Search patients"
-                            placeholder="Search whole words..."
-                            className="pl-9"
-                            value={search}
-                            onChange={onFilterChange(setSearch)}
+                <CardContent className="space-y-4">
+                    <div className="space-y-1.5">
+                        <FilterField label="Search">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Name or condition"
+                                    className="pl-9"
+                                    value={search}
+                                    onChange={onFilterChange(setSearch)}
+                                />
+                            </div>
+                        </FilterField>
+                        <p className="text-xs text-muted-foreground">
+                            Search matches whole words, for example &ldquo;diabetes&rdquo; but not &ldquo;diab&rdquo;.
+                        </p>
+                    </div>
+
+                    <div className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <FilterField label="Condition">
+                            <NativeSelect value={condition} onChange={onFilterChange(setCondition)}>
+                                <option value="">All conditions</option>
+                                {conditionOptions?.map((c) => (
+                                    <option key={c} value={c}>
+                                        {c}
+                                    </option>
+                                ))}
+                            </NativeSelect>
+                        </FilterField>
+                        <FilterField label="Doctor">
+                            <NativeSelect value={doctor} onChange={onFilterChange(setDoctor)}>
+                                <option value="">All doctors</option>
+                                {doctorOptions?.map((d) => (
+                                    <option key={d._id} value={d._id}>
+                                        {d.name}
+                                    </option>
+                                ))}
+                            </NativeSelect>
+                        </FilterField>
+                        <FilterField label="Gender">
+                            <NativeSelect value={gender} onChange={onFilterChange(setGender)}>
+                                <option value="">All genders</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </NativeSelect>
+                        </FilterField>
+                        <DateRangeFilter
+                            label="Visited between"
+                            from={from}
+                            to={to}
+                            onFromChange={onValueChange(setFrom)}
+                            onToChange={onValueChange(setTo)}
+                            className="sm:col-span-2 lg:col-span-4"
                         />
                     </div>
-                    <NativeSelect aria-label="Filter by condition" value={condition} onChange={onFilterChange(setCondition)}>
-                        <option value="">All conditions</option>
-                        {conditionOptions?.map((c) => (
-                            <option key={c} value={c}>
-                                {c}
-                            </option>
-                        ))}
-                    </NativeSelect>
-                    <NativeSelect aria-label="Filter by doctor" value={doctor} onChange={onFilterChange(setDoctor)}>
-                        <option value="">All doctors</option>
-                        {doctorOptions?.map((d) => (
-                            <option key={d._id} value={d._id}>
-                                {d.name}
-                            </option>
-                        ))}
-                    </NativeSelect>
-                    <NativeSelect aria-label="Filter by gender" value={gender} onChange={onFilterChange(setGender)}>
-                        <option value="">All genders</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                    </NativeSelect>
-                    <DateRangeFilter
-                        label=""
-                        from={from}
-                        to={to}
-                        onFromChange={onValueChange(setFrom)}
-                        onToChange={onValueChange(setTo)}
-                        className="sm:col-span-2"
-                    />
+
                     {hasFilters && (
-                        <div className="sm:col-span-2 lg:col-span-3">
-                            <Button variant="ghost" size="sm" onClick={clearFilters}>
-                                Clear filters
-                            </Button>
-                        </div>
+                        <Button variant="ghost" size="sm" onClick={clearFilters}>
+                            Clear filters
+                        </Button>
                     )}
                 </CardContent>
             </Card>
 
             {error && <p className="text-sm text-destructive">{error.message}</p>}
 
-            <div className={cn("rounded-lg border bg-card", isFetching && !isPending && "opacity-70")}>
+            <TableFrame dimmed={isFetching && !isPending}>
                 <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead>Name</TableHead>
-                            <TableHead className="hidden sm:table-cell">Age / Gender</TableHead>
+                            <TableHead className="hidden sm:table-cell">Age and gender</TableHead>
                             <TableHead className="hidden md:table-cell">Condition</TableHead>
                             <TableHead className="hidden lg:table-cell">Doctor</TableHead>
                             <TableHead className="hidden md:table-cell">Visit date</TableHead>
@@ -166,26 +183,48 @@ export default function PatientsPage() {
                             ))}
 
                         {data?.data.length === 0 && (
-                            <TableRow>
-                                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
-                                    {hasFilters ? "No patients match your filters." : "No patients yet."}
-                                </TableCell>
-                            </TableRow>
+                            <TableEmpty
+                                colSpan={6}
+                                title={hasFilters ? "No patients match your filters." : "No patients yet. Open a doctor to add the first one."}
+                                action={
+                                    hasFilters ? (
+                                        <Button variant="outline" size="sm" onClick={clearFilters}>
+                                            Clear filters
+                                        </Button>
+                                    ) : (
+                                        <Link
+                                            href="/doctors"
+                                            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                                        >
+                                            Go to doctors
+                                        </Link>
+                                    )
+                                }
+                            />
                         )}
 
                         {data?.data.map((patient) => (
                             <TableRow key={patient._id}>
                                 <TableCell>
-                                    <div className="font-medium">{patient.name}</div>
-                                    <div className="text-xs text-muted-foreground md:hidden">
-                                        {patient.condition} &middot; {formatDate(patient.visitDate)}
+                                    <div className="flex items-center gap-3">
+                                        <InitialsAvatar name={patient.name} />
+                                        <div className="min-w-0">
+                                            <div className="font-medium">{patient.name}</div>
+                                            <div className="text-xs text-muted-foreground md:hidden">
+                                                {patient.condition}, {formatDate(patient.visitDate)}
+                                            </div>
+                                            <div className="text-xs tabular-nums text-muted-foreground">{patient.phone}</div>
+                                        </div>
                                     </div>
-                                    <div className="text-xs text-muted-foreground">{patient.phone}</div>
                                 </TableCell>
                                 <TableCell className="hidden capitalize sm:table-cell">
-                                    {patient.age} &middot; {patient.gender}
+                                    {patient.age} yrs, {patient.gender}
                                 </TableCell>
-                                <TableCell className="hidden md:table-cell">{patient.condition}</TableCell>
+                                <TableCell className="hidden md:table-cell">
+                                    <Badge variant="secondary" className="font-normal">
+                                        {patient.condition}
+                                    </Badge>
+                                </TableCell>
                                 <TableCell className="hidden lg:table-cell">
                                     {typeof patient.doctor === "object" ? (
                                         <Link href={`/doctors/${patient.doctor._id}`} className="hover:underline">
@@ -225,7 +264,7 @@ export default function PatientsPage() {
                 {data && data.pagination.total > 0 && (
                     <PaginationControls pagination={data.pagination} onPageChange={setPage} disabled={isFetching} />
                 )}
-            </div>
+            </TableFrame>
 
             <EditPatientDialog patient={patientToEdit} onClose={() => setPatientToEdit(null)} />
             <DeletePatientDialog

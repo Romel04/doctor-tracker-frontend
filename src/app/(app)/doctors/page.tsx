@@ -6,8 +6,13 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
 import { DateRangeFilter } from "@/components/date-range-filter";
 import { CreateDoctorDialog } from "@/components/doctors/create-doctor-dialog";
+import { FilterField } from "@/components/filter-field";
+import { InitialsAvatar } from "@/components/initials-avatar";
 import { NativeSelect } from "@/components/native-select";
+import { PageHeader } from "@/components/page-header";
 import { PaginationControls } from "@/components/pagination-controls";
+import { TableEmpty } from "@/components/table-empty";
+import { TableFrame } from "@/components/table-frame";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,7 +23,6 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import type { Doctor, Paginated } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
 
@@ -70,66 +74,78 @@ export default function DoctorsPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-semibold">Doctors</h1>
-                    <p className="text-sm text-muted-foreground">Manage doctors and see their patients.</p>
-                </div>
-                <Button onClick={() => setCreateOpen(true)}>
-                    <Plus className="size-4" />
-                    Add doctor
-                </Button>
-            </div>
+            <PageHeader
+                title="Doctors"
+                description="Manage doctors and see their patients."
+                action={
+                    <Button onClick={() => setCreateOpen(true)}>
+                        <Plus className="size-4" />
+                        Add doctor
+                    </Button>
+                }
+            />
 
             <Card>
-                <CardContent className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                    <div className="relative sm:col-span-2 lg:col-span-1">
-                        <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
-                        <Input
-                            aria-label="Search doctors"
-                            placeholder="Search whole words..."
-                            className="pl-9"
-                            value={search}
-                            onChange={onFilterChange(setSearch)}
+                <CardContent className="space-y-4">
+                    <div className="space-y-1.5">
+                        <FilterField label="Search">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Name, specialization or hospital"
+                                    className="pl-9"
+                                    value={search}
+                                    onChange={onFilterChange(setSearch)}
+                                />
+                            </div>
+                        </FilterField>
+                        <p className="text-xs text-muted-foreground">
+                            Search matches whole words, for example &ldquo;cardiology&rdquo; but not &ldquo;cardio&rdquo;.
+                        </p>
+                    </div>
+
+                    <div className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <FilterField label="Specialization">
+                            <NativeSelect value={specialization} onChange={onFilterChange(setSpecialization)}>
+                                <option value="">All specializations</option>
+                                {filterOptions?.specializations.map((s) => (
+                                    <option key={s} value={s}>
+                                        {s}
+                                    </option>
+                                ))}
+                            </NativeSelect>
+                        </FilterField>
+                        <FilterField label="Hospital">
+                            <NativeSelect value={hospital} onChange={onFilterChange(setHospital)}>
+                                <option value="">All hospitals</option>
+                                {filterOptions?.hospitals.map((h) => (
+                                    <option key={h} value={h}>
+                                        {h}
+                                    </option>
+                                ))}
+                            </NativeSelect>
+                        </FilterField>
+                        <DateRangeFilter
+                            label=""
+                            from={from}
+                            to={to}
+                            onFromChange={onValueChange(setFrom)}
+                            onToChange={onValueChange(setTo)}
+                            className="sm:col-span-2"
                         />
                     </div>
-                    <NativeSelect aria-label="Filter by specialization" value={specialization} onChange={onFilterChange(setSpecialization)}>
-                        <option value="">All specializations</option>
-                        {filterOptions?.specializations.map((s) => (
-                            <option key={s} value={s}>
-                                {s}
-                            </option>
-                        ))}
-                    </NativeSelect>
-                    <NativeSelect aria-label="Filter by hospital" value={hospital} onChange={onFilterChange(setHospital)}>
-                        <option value="">All hospitals</option>
-                        {filterOptions?.hospitals.map((h) => (
-                            <option key={h} value={h}>
-                                {h}
-                            </option>
-                        ))}
-                    </NativeSelect>
-                    <DateRangeFilter
-                        label=""
-                        from={from}
-                        to={to}
-                        onFromChange={onValueChange(setFrom)}
-                        onToChange={onValueChange(setTo)}
-                        className="sm:col-span-2"
-                    />
+
                     {hasFilters && (
-                        <div className="sm:col-span-2 lg:col-span-5">
-                            <Button variant="ghost" size="sm" onClick={clearFilters}>
-                                Clear filters
-                            </Button>
-                        </div>
+                        <Button variant="ghost" size="sm" onClick={clearFilters}>
+                            Clear filters
+                        </Button>
                     )}
                 </CardContent>
             </Card>
 
             {error && <p className="text-sm text-destructive">{error.message}</p>}
 
-            <div className={cn("rounded-lg border bg-card", isFetching && !isPending && "opacity-70")}>
+            <TableFrame dimmed={isFetching && !isPending}>
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -153,29 +169,49 @@ export default function DoctorsPage() {
                             ))}
 
                         {data?.data.length === 0 && (
-                            <TableRow>
-                                <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
-                                    No doctors found.
-                                </TableCell>
-                            </TableRow>
+                            <TableEmpty
+                                colSpan={7}
+                                title={hasFilters ? "No doctors match your filters." : "No doctors yet. Add your first doctor to get started."}
+                                action={
+                                    hasFilters ? (
+                                        <Button variant="outline" size="sm" onClick={clearFilters}>
+                                            Clear filters
+                                        </Button>
+                                    ) : (
+                                        <Button size="sm" onClick={() => setCreateOpen(true)}>
+                                            <Plus className="size-4" />
+                                            Add doctor
+                                        </Button>
+                                    )
+                                }
+                            />
                         )}
 
                         {data?.data.map((doctor) => (
                             <TableRow key={doctor._id}>
                                 <TableCell>
-                                    <div className="font-medium">{doctor.name}</div>
-                                    <div className="text-xs text-muted-foreground lg:hidden">
-                                        {doctor.specialization} &middot; {doctor.hospital}
+                                    <div className="flex items-center gap-3">
+                                        <InitialsAvatar name={doctor.name} />
+                                        <div className="min-w-0">
+                                            <Link href={`/doctors/${doctor._id}`} className="font-medium hover:underline">
+                                                {doctor.name}
+                                            </Link>
+                                            <div className="text-xs text-muted-foreground lg:hidden">
+                                                {doctor.specialization} at {doctor.hospital}
+                                            </div>
+                                        </div>
                                     </div>
                                 </TableCell>
                                 <TableCell className="hidden lg:table-cell">{doctor.specialization}</TableCell>
                                 <TableCell className="hidden lg:table-cell">{doctor.hospital}</TableCell>
                                 <TableCell className="hidden xl:table-cell">
-                                    <div>{doctor.phone}</div>
+                                    <div className="tabular-nums">{doctor.phone}</div>
                                     <div className="text-xs text-muted-foreground">{doctor.email}</div>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <Badge variant="secondary">{doctor.patientCount ?? 0}</Badge>
+                                    <Badge variant="secondary" className="tabular-nums">
+                                        {doctor.patientCount ?? 0}
+                                    </Badge>
                                 </TableCell>
                                 <TableCell className="hidden md:table-cell">{formatDate(doctor.createdAt)}</TableCell>
                                 <TableCell>
@@ -189,7 +225,7 @@ export default function DoctorsPage() {
                 </Table>
 
                 {data && <PaginationControls pagination={data.pagination} onPageChange={setPage} disabled={isFetching} />}
-            </div>
+            </TableFrame>
 
             <CreateDoctorDialog open={createOpen} onOpenChange={setCreateOpen} />
         </div>
