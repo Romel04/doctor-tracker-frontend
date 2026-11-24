@@ -23,3 +23,13 @@ export type Patient = {
     doctor: string | { _id: string; name: string; specialization: string; hospital: string };
     createdAt: string;
 };
+
+export type DashboardData = {
+    range: { days: number; from: string; to: string };
+    totals: { doctors: number; patients: number; patientsInRange: number; newDoctorsInRange: number };
+    patientsPerDoctor: { doctorId: string; name: string; specialization: string; patients: number }[];
+    patientsOverTime: { date: string; count: number }[];
+    conditions: { condition: string; count: number }[];
+    gender: { gender: string; count: number }[];
+    specializations: { specialization: string; count: number }[];
+};
