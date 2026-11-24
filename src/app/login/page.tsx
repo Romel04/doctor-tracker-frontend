@@ -6,8 +6,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -49,13 +49,50 @@ export default function LoginPage() {
     }
 
     return (
-        <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-            <Card className="w-full max-w-sm">
-                <CardHeader>
-                    <CardTitle className="text-2xl">Doctor Tracker</CardTitle>
-                    <CardDescription>Sign in to manage doctors and patients</CardDescription>
-                </CardHeader>
-                <CardContent>
+        <main className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
+            {/* Brand panel (desktop only) */}
+            <section className="relative hidden flex-col justify-between overflow-hidden bg-sidebar p-12 text-sidebar-foreground lg:flex">
+                <span className="flex items-center gap-2.5 font-heading text-lg font-semibold tracking-tight">
+                    <span className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                        <Stethoscope className="size-4" />
+                    </span>
+                    Doctor Tracker
+                </span>
+
+                <div className="space-y-6">
+                    <svg viewBox="0 0 600 120" className="w-full max-w-xl" fill="none" aria-hidden>
+                        <path
+                            className="trace-draw"
+                            pathLength={1}
+                            d="M0 70 H120 L140 70 L155 30 L172 100 L188 48 L200 70 H330 L346 70 L360 22 L378 104 L394 50 L406 70 H600"
+                            stroke="var(--sidebar-primary)"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                    </svg>
+                    <h1 className="max-w-md font-heading text-4xl font-semibold leading-tight tracking-tight text-white">
+                        Every doctor, patient and visit in one place.
+                    </h1>
+                </div>
+
+                <p className="text-sm text-sidebar-foreground/70">Admin access only.</p>
+            </section>
+
+            {/* Form */}
+            <section className="flex items-center justify-center bg-background p-6">
+                <div className="w-full max-w-sm space-y-8">
+                    <div className="space-y-2">
+                        <span className="flex items-center gap-2.5 font-heading text-lg font-semibold tracking-tight lg:hidden">
+                            <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                <Stethoscope className="size-4" />
+                            </span>
+                            Doctor Tracker
+                        </span>
+                        <h2 className="font-heading text-2xl font-semibold tracking-tight">Sign in</h2>
+                        <p className="text-sm text-muted-foreground">Use your admin email and password.</p>
+                    </div>
+
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
@@ -76,8 +113,8 @@ export default function LoginPage() {
                             </p>
                         )}
                     </form>
-                </CardContent>
-            </Card>
+                </div>
+            </section>
         </main>
     );
 }

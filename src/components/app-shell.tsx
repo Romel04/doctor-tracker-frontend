@@ -14,14 +14,24 @@ const NAV = [
     { href: "/patients", label: "Patients", icon: Users },
 ];
 
+function Brand() {
+    return (
+        <span className="flex items-center gap-2.5 font-heading text-lg font-semibold tracking-tight">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <Stethoscope className="size-4" />
+            </span>
+            Doctor Tracker
+        </span>
+    );
+}
+
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     const pathname = usePathname();
 
     return (
-        <div className="flex h-full flex-col gap-6 p-4">
-            <Link href="/dashboard" onClick={onNavigate} className="flex items-center gap-2 px-2 text-lg font-semibold">
-                <Stethoscope className="size-5 text-primary" />
-                Doctor Tracker
+        <div className="flex h-full flex-col gap-8 p-4">
+            <Link href="/dashboard" onClick={onNavigate} className="px-2 pt-1">
+                <Brand />
             </Link>
 
             <nav className="flex flex-1 flex-col gap-1">
@@ -34,10 +44,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                             onClick={onNavigate}
                             aria-current={active ? "page" : undefined}
                             className={cn(
-                                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                                "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                                 active
-                                    ? "bg-primary text-primary-foreground"
-                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    ? "bg-sidebar-accent text-sidebar-accent-foreground before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-sidebar-primary"
+                                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
                             )}
                         >
                             <Icon className="size-4" />
@@ -47,7 +57,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 })}
             </nav>
 
-            <LogoutButton className="w-full justify-start" />
+            <LogoutButton className="w-full justify-start border-sidebar-border bg-transparent text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" />
         </div>
     );
 }
@@ -58,27 +68,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return (
         <div className="min-h-screen md:flex">
             {/* Desktop sidebar */}
-            <aside className="hidden w-60 shrink-0 border-r bg-card md:sticky md:top-0 md:block md:h-screen">
+            <aside className="hidden w-60 shrink-0 bg-sidebar text-sidebar-foreground md:sticky md:top-0 md:block md:h-screen">
                 <SidebarContent />
             </aside>
 
             {/* Mobile top bar */}
-            <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-card px-4 md:hidden">
-                <Button variant="outline" size="icon" aria-label="Open menu" onClick={() => setMobileOpen(true)}>
+            <header className="sticky top-0 z-30 flex h-14 items-center gap-3 bg-sidebar px-4 text-sidebar-foreground md:hidden">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Open menu"
+                    className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    onClick={() => setMobileOpen(true)}
+                >
                     <Menu className="size-4" />
                 </Button>
-                <span className="font-semibold">Doctor Tracker</span>
+                <Brand />
             </header>
 
             {/* Mobile slide-over menu */}
             {mobileOpen && (
                 <div className="fixed inset-0 z-40 md:hidden">
                     <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} aria-hidden />
-                    <div className="absolute inset-y-0 left-0 w-64 bg-card shadow-lg">
+                    <div className="absolute inset-y-0 left-0 w-64 bg-sidebar text-sidebar-foreground shadow-lg">
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="absolute right-2 top-2"
+                            className="absolute right-2 top-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                             aria-label="Close menu"
                             onClick={() => setMobileOpen(false)}
                         >

@@ -1,6 +1,6 @@
-// Your Nova theme's own chart colors are all grays, so the charts use this small palette instead.
+// Chart palette: pine first, then vermilion, amber, steel blue, plum, sage.
 // Change the colors here and every chart updates.
-export const CHART_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#f43f5e", "#06b6d4"];
+export const CHART_COLORS = ["#0e6b5c", "#e0662f", "#d9a21b", "#3f6fa8", "#7a5c99", "#5ba89b"];
 
 // Axis labels use the theme's muted text color, so they work in light and dark mode.
 export const axisTick = { fill: "var(--muted-foreground)", fontSize: 12 };
