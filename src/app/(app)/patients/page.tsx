@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Pencil, Search, Trash2 } from "lucide-react";
+import { DateRangeFilter } from "@/components/date-range-filter";
 import { NativeSelect } from "@/components/native-select";
 import { DeletePatientDialog } from "@/components/patients/delete-patient-dialog";
 import { EditPatientDialog } from "@/components/patients/edit-patient-dialog";
@@ -64,6 +65,10 @@ export default function PatientsPage() {
             setter(e.target.value);
             setPage(1);
         };
+    const onValueChange = (setter: (value: string) => void) => (value: string) => {
+        setter(value);
+        setPage(1);
+    };
 
     function clearFilters() {
         setSearch("");
@@ -85,7 +90,7 @@ export default function PatientsPage() {
             </div>
 
             <Card>
-                <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <CardContent className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <div className="relative">
                         <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
                         <Input
@@ -118,8 +123,14 @@ export default function PatientsPage() {
                         <option value="female">Female</option>
                         <option value="other">Other</option>
                     </NativeSelect>
-                    <Input aria-label="Visited from" type="date" value={from} onChange={onFilterChange(setFrom)} />
-                    <Input aria-label="Visited to" type="date" value={to} onChange={onFilterChange(setTo)} />
+                    <DateRangeFilter
+                        label=""
+                        from={from}
+                        to={to}
+                        onFromChange={onValueChange(setFrom)}
+                        onToChange={onValueChange(setTo)}
+                        className="sm:col-span-2"
+                    />
                     {hasFilters && (
                         <div className="sm:col-span-2 lg:col-span-3">
                             <Button variant="ghost" size="sm" onClick={clearFilters}>

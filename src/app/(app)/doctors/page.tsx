@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
+import { DateRangeFilter } from "@/components/date-range-filter";
 import { CreateDoctorDialog } from "@/components/doctors/create-doctor-dialog";
 import { NativeSelect } from "@/components/native-select";
 import { PaginationControls } from "@/components/pagination-controls";
@@ -53,6 +54,10 @@ export default function DoctorsPage() {
             setter(e.target.value);
             setPage(1);
         };
+    const onValueChange = (setter: (value: string) => void) => (value: string) => {
+        setter(value);
+        setPage(1);
+    };
 
     function clearFilters() {
         setSearch("");
@@ -77,7 +82,7 @@ export default function DoctorsPage() {
             </div>
 
             <Card>
-                <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                <CardContent className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-5">
                     <div className="relative sm:col-span-2 lg:col-span-1">
                         <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
                         <Input
@@ -104,8 +109,14 @@ export default function DoctorsPage() {
                             </option>
                         ))}
                     </NativeSelect>
-                    <Input aria-label="Added from" type="date" value={from} onChange={onFilterChange(setFrom)} />
-                    <Input aria-label="Added to" type="date" value={to} onChange={onFilterChange(setTo)} />
+                    <DateRangeFilter
+                        label=""
+                        from={from}
+                        to={to}
+                        onFromChange={onValueChange(setFrom)}
+                        onToChange={onValueChange(setTo)}
+                        className="sm:col-span-2"
+                    />
                     {hasFilters && (
                         <div className="sm:col-span-2 lg:col-span-5">
                             <Button variant="ghost" size="sm" onClick={clearFilters}>
