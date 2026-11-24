@@ -2,17 +2,11 @@
 
 import { useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { CalendarDays, Stethoscope, UserPlus, Users } from "lucide-react";
 import { ChartCard } from "@/components/dashboard/chart-card";
-import {
-    ConditionsChart,
-    GenderChart,
-    PatientsOverTimeChart,
-    PatientsPerDoctorChart,
-    SpecializationsChart,
-} from "@/components/dashboard/charts";
+import { ConditionsChart, GenderChart, PatientsPerDoctorChart, SpecializationsChart } from "@/components/dashboard/charts";
 import { RangeSelector } from "@/components/dashboard/range-selector";
-import { StatCard } from "@/components/dashboard/stat-card";
+import { StatStrip } from "@/components/dashboard/stat-strip";
+import { VisitsHero } from "@/components/dashboard/visits-hero";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type { DashboardData } from "@/lib/types";
@@ -34,7 +28,7 @@ export default function DashboardPage() {
         <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-semibold">Dashboard</h1>
+                    <h1 className="font-heading text-2xl font-semibold tracking-tight">Dashboard</h1>
                     <p className="text-sm text-muted-foreground">An overview of doctors and patients.</p>
                 </div>
                 <RangeSelector value={days} onChange={setDays} />
@@ -50,36 +44,28 @@ export default function DashboardPage() {
             )}
 
             <div className={cn("space-y-6", isFetching && !isPending && "opacity-70")}>
-                {/* Stat cards */}
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <StatCard title="Total doctors" value={data?.totals.doctors} hint="All time" icon={Stethoscope} />
-                    <StatCard title="Total patients" value={data?.totals.patients} hint="All time" icon={Users} />
-                    <StatCard
-                        title="Patient visits"
-                        value={data?.totals.patientsInRange}
-                        hint={`In the ${rangeLabel}`}
-                        icon={CalendarDays}
-                    />
-                    <StatCard
-                        title="New doctors"
-                        value={data?.totals.newDoctorsInRange}
-                        hint={`Added in the ${rangeLabel}`}
-                        icon={UserPlus}
-                    />
-                </div>
+                {/* The main chart: visits per day in the selected range */}
+                <VisitsHero
+                    data={data?.patientsOverTime}
+                    total={data?.totals.patientsInRange}
+                    days={days}
+                    loading={loading}
+                />
 
-                {/* Charts */}
+                {/* All-time totals plus new doctors in the range */}
+                <StatStrip
+                    items={[
+                        { title: "Total doctors", value: data?.totals.doctors, hint: "All time" },
+                        { title: "Total patients", value: data?.totals.patients, hint: "All time" },
+                        {
+                            title: "New doctors",
+                            value: data?.totals.newDoctorsInRange,
+                            hint: `Added in the ${rangeLabel}`,
+                        },
+                    ]}
+                />
+
                 <div className="grid gap-6 lg:grid-cols-2">
-                    <ChartCard
-                        title="Patient visits over time"
-                        description={`Visits per day, ${rangeLabel}`}
-                        loading={loading}
-                        isEmpty={data?.totals.patientsInRange === 0}
-                        className="lg:col-span-2"
-                    >
-                        {data && <PatientsOverTimeChart data={data.patientsOverTime} />}
-                    </ChartCard>
-
                     <ChartCard
                         title="Patients per doctor"
                         description="Top 10 doctors by number of patients (all time)"
@@ -90,21 +76,21 @@ export default function DashboardPage() {
                     </ChartCard>
 
                     <ChartCard
-                        title="Gender split"
-                        description="Patients by gender (all time)"
-                        loading={loading}
-                        isEmpty={data?.gender.length === 0}
-                    >
-                        {data && <GenderChart data={data.gender} />}
-                    </ChartCard>
-
-                    <ChartCard
                         title="Top conditions"
                         description="Most common patient conditions (all time)"
                         loading={loading}
                         isEmpty={data?.conditions.length === 0}
                     >
                         {data && <ConditionsChart data={data.conditions} />}
+                    </ChartCard>
+
+                    <ChartCard
+                        title="Gender split"
+                        description="Patients by gender (all time)"
+                        loading={loading}
+                        isEmpty={data?.gender.length === 0}
+                    >
+                        {data && <GenderChart data={data.gender} />}
                     </ChartCard>
 
                     <ChartCard

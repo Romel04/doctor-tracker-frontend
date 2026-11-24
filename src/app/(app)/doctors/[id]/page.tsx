@@ -5,10 +5,14 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Plus, Search, Trash2 } from "lucide-react";
+import { FilterField } from "@/components/filter-field";
+import { InitialsAvatar } from "@/components/initials-avatar";
 import { NativeSelect } from "@/components/native-select";
 import { AddPatientDialog } from "@/components/patients/add-patient-dialog";
 import { DeletePatientDialog } from "@/components/patients/delete-patient-dialog";
 import { PaginationControls } from "@/components/pagination-controls";
+import { TableEmpty } from "@/components/table-empty";
+import { TableFrame } from "@/components/table-frame";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +23,6 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { api, ApiError } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import type { Doctor, Paginated, Patient } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
 
@@ -95,26 +98,31 @@ export default function DoctorDetailPage() {
                             <Skeleton className="h-4 w-80" />
                         </div>
                     ) : (
-                        <div className="space-y-4">
-                            <div>
-                                <h1 className="text-2xl font-semibold">{doctor.name}</h1>
-                                <p className="text-sm text-muted-foreground">
-                                    {doctor.specialization} &middot; {doctor.hospital}
-                                </p>
+                        <div className="space-y-5">
+                            <div className="flex items-center gap-4">
+                                <InitialsAvatar name={doctor.name} className="size-14 text-lg" />
+                                <div>
+                                    <h1 className="font-heading text-2xl font-semibold tracking-tight">{doctor.name}</h1>
+                                    <p className="text-sm text-muted-foreground">
+                                        {doctor.specialization} at {doctor.hospital}
+                                    </p>
+                                </div>
                             </div>
-                            <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+                            <dl className="grid gap-4 border-t pt-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
                                 <div>
                                     <dt className="text-muted-foreground">Email</dt>
                                     <dd className="break-all">{doctor.email}</dd>
                                 </div>
                                 <div>
                                     <dt className="text-muted-foreground">Phone</dt>
-                                    <dd>{doctor.phone}</dd>
+                                    <dd className="tabular-nums">{doctor.phone}</dd>
                                 </div>
                                 <div>
                                     <dt className="text-muted-foreground">Patients</dt>
                                     <dd>
-                                        <Badge variant="secondary">{doctor.patientCount ?? 0}</Badge>
+                                        <Badge variant="secondary" className="tabular-nums">
+                                            {doctor.patientCount ?? 0}
+                                        </Badge>
                                     </dd>
                                 </div>
                                 <div>
@@ -129,7 +137,7 @@ export default function DoctorDetailPage() {
 
             {/* Patients */}
             <div className="flex items-center justify-between gap-4">
-                <h2 className="text-xl font-semibold">Patients</h2>
+                <h2 className="font-heading text-xl font-semibold tracking-tight">Patients</h2>
                 <Button onClick={() => setAddOpen(true)}>
                     <Plus className="size-4" />
                     Add patient
@@ -137,53 +145,58 @@ export default function DoctorDetailPage() {
             </div>
 
             <Card>
-                <CardContent className="grid gap-4 sm:grid-cols-2">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
-                        <Input
-                            aria-label="Search patients"
-                            placeholder="Search whole words..."
-                            className="pl-9"
-                            value={search}
-                            onChange={(e) => {
-                                setSearch(e.target.value);
-                                setPage(1);
-                            }}
-                        />
+                <CardContent className="space-y-4">
+                    <div className="grid items-end gap-4 sm:grid-cols-2">
+                        <FilterField label="Search">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Name or condition"
+                                    className="pl-9"
+                                    value={search}
+                                    onChange={(e) => {
+                                        setSearch(e.target.value);
+                                        setPage(1);
+                                    }}
+                                />
+                            </div>
+                        </FilterField>
+                        <FilterField label="Condition">
+                            <NativeSelect
+                                value={condition}
+                                onChange={(e) => {
+                                    setCondition(e.target.value);
+                                    setPage(1);
+                                }}
+                            >
+                                <option value="">All conditions</option>
+                                {conditionOptions?.map((c) => (
+                                    <option key={c} value={c}>
+                                        {c}
+                                    </option>
+                                ))}
+                            </NativeSelect>
+                        </FilterField>
                     </div>
-                    <NativeSelect
-                        aria-label="Filter by condition"
-                        value={condition}
-                        onChange={(e) => {
-                            setCondition(e.target.value);
-                            setPage(1);
-                        }}
-                    >
-                        <option value="">All conditions</option>
-                        {conditionOptions?.map((c) => (
-                            <option key={c} value={c}>
-                                {c}
-                            </option>
-                        ))}
-                    </NativeSelect>
+                    <p className="text-xs text-muted-foreground">
+                        Search matches whole words, for example &ldquo;diabetes&rdquo; but not &ldquo;diab&rdquo;.
+                    </p>
                     {hasFilters && (
-                        <div className="sm:col-span-2">
-                            <Button variant="ghost" size="sm" onClick={clearFilters}>
-                                Clear filters
-                            </Button>
-                        </div>
+                        <Button variant="ghost" size="sm" onClick={clearFilters}>
+                            Clear filters
+                        </Button>
                     )}
                 </CardContent>
             </Card>
 
             {error && <p className="text-sm text-destructive">{error.message}</p>}
 
-            <div className={cn("rounded-lg border bg-card", isFetching && !isPending && "opacity-70")}>
+            <TableFrame dimmed={isFetching && !isPending}>
                 <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead>Name</TableHead>
-                            <TableHead className="hidden sm:table-cell">Age / Gender</TableHead>
+                            <TableHead className="hidden sm:table-cell">Age and gender</TableHead>
                             <TableHead className="hidden md:table-cell">Condition</TableHead>
                             <TableHead className="hidden lg:table-cell">Phone</TableHead>
                             <TableHead className="hidden md:table-cell">Visit date</TableHead>
@@ -201,26 +214,46 @@ export default function DoctorDetailPage() {
                             ))}
 
                         {data?.data.length === 0 && (
-                            <TableRow>
-                                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
-                                    {hasFilters ? "No patients match your filters." : "No patients yet. Add the first one."}
-                                </TableCell>
-                            </TableRow>
+                            <TableEmpty
+                                colSpan={6}
+                                title={hasFilters ? "No patients match your filters." : "No patients yet. Add the first one."}
+                                action={
+                                    hasFilters ? (
+                                        <Button variant="outline" size="sm" onClick={clearFilters}>
+                                            Clear filters
+                                        </Button>
+                                    ) : (
+                                        <Button size="sm" onClick={() => setAddOpen(true)}>
+                                            <Plus className="size-4" />
+                                            Add patient
+                                        </Button>
+                                    )
+                                }
+                            />
                         )}
 
                         {data?.data.map((patient) => (
                             <TableRow key={patient._id}>
                                 <TableCell>
-                                    <div className="font-medium">{patient.name}</div>
-                                    <div className="text-xs text-muted-foreground md:hidden">
-                                        {patient.condition} &middot; {formatDate(patient.visitDate)}
+                                    <div className="flex items-center gap-3">
+                                        <InitialsAvatar name={patient.name} />
+                                        <div className="min-w-0">
+                                            <div className="font-medium">{patient.name}</div>
+                                            <div className="text-xs text-muted-foreground md:hidden">
+                                                {patient.condition}, {formatDate(patient.visitDate)}
+                                            </div>
+                                        </div>
                                     </div>
                                 </TableCell>
                                 <TableCell className="hidden capitalize sm:table-cell">
-                                    {patient.age} &middot; {patient.gender}
+                                    {patient.age} yrs, {patient.gender}
                                 </TableCell>
-                                <TableCell className="hidden md:table-cell">{patient.condition}</TableCell>
-                                <TableCell className="hidden lg:table-cell">{patient.phone}</TableCell>
+                                <TableCell className="hidden md:table-cell">
+                                    <Badge variant="secondary" className="font-normal">
+                                        {patient.condition}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="hidden tabular-nums lg:table-cell">{patient.phone}</TableCell>
                                 <TableCell className="hidden md:table-cell">{formatDate(patient.visitDate)}</TableCell>
                                 <TableCell>
                                     <Button
@@ -240,7 +273,7 @@ export default function DoctorDetailPage() {
                 {data && data.pagination.total > 0 && (
                     <PaginationControls pagination={data.pagination} onPageChange={setPage} disabled={isFetching} />
                 )}
-            </div>
+            </TableFrame>
 
             <AddPatientDialog doctorId={id} open={addOpen} onOpenChange={setAddOpen} />
             <DeletePatientDialog

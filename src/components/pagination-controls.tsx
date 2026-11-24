@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Pagination } from "@/lib/types";
 
@@ -16,18 +17,20 @@ export function PaginationControls({
 
     return (
         <div className="flex flex-col items-center justify-between gap-3 border-t px-4 py-3 text-sm sm:flex-row">
-            <p className="text-muted-foreground">
-                Showing {start}-{end} of {total}
+            <p className="text-muted-foreground tabular-nums">
+                Showing {start} to {end} of {total}
             </p>
             <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => onPageChange(page - 1)} disabled={disabled || page <= 1}>
+                    <ChevronLeft className="size-4" />
                     Previous
                 </Button>
-                <span className="px-2">
+                <span className="px-2 tabular-nums">
                     Page {page} of {totalPages}
                 </span>
                 <Button variant="outline" size="sm" onClick={() => onPageChange(page + 1)} disabled={disabled || page >= totalPages}>
                     Next
+                    <ChevronRight className="size-4" />
                 </Button>
             </div>
         </div>
